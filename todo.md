@@ -1,0 +1,4 @@
+- [ ] rendre le canvas dynamique en terme de taille
+- [ ] mettre en place des traductions francais - anglais
+- [ ] faire en sorte de rendre les scene génériques
+- [ ] voir pour rendre le canvas dynamique facilement

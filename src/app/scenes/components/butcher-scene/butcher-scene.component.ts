@@ -23,20 +23,17 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('butcherCanvas', {static: false}) butcherCanvas?: ElementRef<HTMLCanvasElement>;
   context: CanvasRenderingContext2D | null = null;
   isBrowser: boolean;
-  hamX = 64;
+  ham = {
+    x: 64,
+    y: 64,
+  }
   lastTime: number = 0;
-
   private animationFrameId!: number;
-
-
   hamImage!: HTMLImageElement;
 
 
   ngOnInit(): void {
     console.log("init component");
-    if (this.isBrowser) {
-      this.loadSprites();
-    }
   }
 
   constructor(
@@ -57,29 +54,63 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    console.log("after init component");
+    if (this.isBrowser) {
+      this.loadSprites();
+    }
+
     if (this.isBrowser) {
       console.log("ngAfterViewInit");
       if (this.butcherCanvas) {
         console.log("canvas set");
         this.context = this.butcherCanvas.nativeElement.getContext('2d');
         if (this.context) {
-          this.startAnimation(this.context, this.butcherCanvas.nativeElement, 0);
+          this.startAnimation();
         }
       }
     }
   }
 
-  startAnimation(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, timestamp: number): void {
-    const deltaTime = (timestamp - this.lastTime) / 1000;
-    this.lastTime = timestamp;
+  startAnimation(timestamp?: number): void {
+
+    const deltaTime = ((timestamp || 0) - this.lastTime) / 1000;
+    this.lastTime = timestamp || 0;
     this.ngZone.runOutsideAngular(() => {
       this.update(deltaTime);
-      this.drawOnCanvas(ctx, canvas);
-      this.animationFrameId = window.requestAnimationFrame((timestamp: number) => this.startAnimation(ctx, canvas, timestamp));
+      this.draw();
+      this.animationFrameId = window.requestAnimationFrame((timestamp: number) => this.startAnimation(timestamp));
     });
   }
 
-  loadSprites(): void {
+  load(): void {
+    this.loadSprites();
+  }
+
+  update(dt: number): void {
+
+    const canvas = this.butcherCanvas?.nativeElement;
+    if (canvas) {
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const imgWidth = this.hamImage.width;
+      const imgHeight = this.hamImage.height;
+
+      // this.ham.x += 10 * dt;
+      this.ham.x = (canvasWidth - imgWidth) / 2;
+      this.ham.y = (canvasHeight - imgHeight) / 2;
+    }
+  }
+
+  draw(): void {
+    if (this.context && this.butcherCanvas) {
+      this.clearCanvas();
+      this.drawOnCanvas();
+    }
+  }
+
+
+
+  private loadSprites(): void {
     const spritesPath = "sprites";
     this.hamImage.src = `${spritesPath}/Sprite-ham.png`;
     this.hamImage.onload = () => {
@@ -87,27 +118,26 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  update(deltaTime: number): void {
-    this.hamX += 10 * deltaTime;
-  }
 
-  drawOnCanvas(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void {
-    const cxt = canvas.getContext('2d');
-    if (!cxt) {
-      console.error("canvas - Fail to get context");
+
+  private drawOnCanvas(): void {
+    const canvas = this.butcherCanvas?.nativeElement;
+    if (!canvas) {
+      console.error("butcher - Fail load canvas");
+      return ;
+    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error("butcher - Fail to get context");
       return;
     }
 
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
     const imgWidth = this.hamImage.width;
     const imgHeight = this.hamImage.height;
 
-    const x = this.hamX;// (canvasWidth - imgWidth) / 2; // Centre horizontal
-    const y = (canvasHeight - imgHeight) / 2; // Centre vertical
+    const x = this.ham.x;
+    const y = this.ham.y;
 
-    // Effacer le canvas et dessiner l'image centrée
-    this.clearCanvas()
     ctx.drawImage(this.hamImage, x, y, imgWidth, imgHeight);
   }
 
