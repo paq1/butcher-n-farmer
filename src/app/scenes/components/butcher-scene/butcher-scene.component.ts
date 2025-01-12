@@ -10,11 +10,14 @@ import {
   ViewChild
 } from '@angular/core';
 import {isPlatformBrowser} from '@angular/common';
+import {DynamicCanvasDirective} from '../../../directives/dynamic-canvas.directive';
 
 @Component({
   selector: 'app-butcher-scene',
   standalone: true,
-  imports: [],
+  imports: [
+    DynamicCanvasDirective
+  ],
   templateUrl: './butcher-scene.component.html',
   styleUrl: './butcher-scene.component.scss'
 })
@@ -108,8 +111,6 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-
-
   private loadSprites(): void {
     const spritesPath = "sprites";
     this.hamImage.src = `${spritesPath}/Sprite-ham.png`;
@@ -117,8 +118,6 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       // nothing for the moment :)
     }
   }
-
-
 
   private drawOnCanvas(): void {
     const canvas = this.butcherCanvas?.nativeElement;
