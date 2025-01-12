@@ -57,6 +57,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       x: 64,
       y: 64,
       scale: 2,
+      minScale: 2,
+      maxScale: 3,
       scaleFactor: 1,
       angle: 0,
     }
@@ -117,11 +119,13 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // update scale
       this.ham.scale += 0.2 * dt * this.ham.scaleFactor;
-      if (this.ham.scale > 3) {
+      if (this.ham.scale > this.ham.maxScale) {
         this.ham.scaleFactor = -1;
+        this.ham.scale = this.ham.maxScale;
       }
-      if (this.ham.scale < 2) {
+      if (this.ham.scale < this.ham.minScale) {
         this.ham.scaleFactor = 1;
+        this.ham.scale = this.ham.minScale;
       }
 
       // update angle
