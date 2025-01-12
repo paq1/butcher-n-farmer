@@ -22,6 +22,9 @@ export class DynamicCanvasDirective implements OnInit {
   ngOnInit(): void {
     if (this.isBrowser) {
       this.ctx = this.canvas.getContext('2d');
+      if (this.ctx) {
+        this.ctx.imageSmoothingEnabled = false;
+      }
       this.setupCanvas();
     }
   }

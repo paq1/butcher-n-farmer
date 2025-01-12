@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import {isPlatformBrowser} from '@angular/common';
 import {DynamicCanvasDirective} from '../../../directives/dynamic-canvas.directive';
+import {HamModel} from '../../../models/butcher/ham.model';
 
 @Component({
   selector: 'app-butcher-scene',
@@ -23,20 +24,20 @@ import {DynamicCanvasDirective} from '../../../directives/dynamic-canvas.directi
 })
 export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
+  isBrowser: boolean; // on est en ssr, donc on veut savoir si c du code client ou serveur
+
   @ViewChild('butcherCanvas', {static: false}) butcherCanvas?: ElementRef<HTMLCanvasElement>;
   context: CanvasRenderingContext2D | null = null;
-  isBrowser: boolean;
-  ham = {
-    x: 64,
-    y: 64,
-  }
+
+  ham: HamModel;
+  hamImage!: HTMLImageElement;
+  // dt
   lastTime: number = 0;
   private animationFrameId!: number;
-  hamImage!: HTMLImageElement;
-
 
   ngOnInit(): void {
     console.log("init component");
+    this.ham = this.initHam();
   }
 
   constructor(
@@ -46,6 +47,18 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isBrowser = isPlatformBrowser(this.platformId);
     if (this.isBrowser) {
       this.hamImage = new Image();
+    }
+
+    this.ham = this.initHam();
+  }
+
+  initHam(): HamModel {
+    return {
+      x: 64,
+      y: 64,
+      scale: 2,
+      scaleFactor: 1,
+      angle: 0,
     }
   }
 
@@ -95,12 +108,28 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     if (canvas) {
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
-      const imgWidth = this.hamImage.width;
-      const imgHeight = this.hamImage.height;
+      const hamWidth = this.hamImage.width;
+      const hamHeight = this.hamImage.height;
 
       // this.ham.x += 10 * dt;
-      this.ham.x = (canvasWidth - imgWidth) / 2;
-      this.ham.y = (canvasHeight - imgHeight) / 2;
+      this.ham.x = (canvasWidth - hamWidth * this.ham.scale) / 2;
+      this.ham.y = (canvasHeight - hamHeight * this.ham.scale) / 2;
+
+      // update scale
+      this.ham.scale += 0.2 * dt * this.ham.scaleFactor;
+      if (this.ham.scale > 3) {
+        this.ham.scaleFactor = -1;
+      }
+      if (this.ham.scale < 2) {
+        this.ham.scaleFactor = 1;
+      }
+
+      // update angle
+      this.ham.angle += 50 * dt;
+      if (this.ham.angle >= 360) {
+        this.ham.angle = 0;
+      }
+
     }
   }
 
@@ -123,21 +152,52 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     const canvas = this.butcherCanvas?.nativeElement;
     if (!canvas) {
       console.error("butcher - Fail load canvas");
-      return ;
+      return;
     }
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       console.error("butcher - Fail to get context");
       return;
     }
+    ctx.imageSmoothingEnabled = false;
 
     const imgWidth = this.hamImage.width;
     const imgHeight = this.hamImage.height;
+    const hamScale = this.ham.scale;
 
-    const x = this.ham.x;
-    const y = this.ham.y;
+    // ctx.drawImage(this.hamImage, x, y, imgWidth, imgHeight);
+    ctx.save();
+    ctx.translate(this.ham.x + imgWidth * this.ham.scale / 2, this.ham.y + imgHeight * this.ham.scale / 2);
+    ctx.rotate((this.ham.angle * Math.PI) / 180);
+    ctx.drawImage(
+      this.hamImage,
+      0,
+      0,
+      imgWidth,
+      imgHeight,
+      -imgWidth * hamScale / 2,
+      -imgHeight * hamScale / 2,
+      imgWidth * hamScale,
+      imgHeight * hamScale
+    );
+    ctx.restore();
 
-    ctx.drawImage(this.hamImage, x, y, imgWidth, imgHeight);
+    this.traceCentralDebug(ctx, canvas);
+  }
+
+  private traceCentralDebug(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void {
+    ctx.strokeStyle = 'red'; // Couleur de la ligne
+    ctx.lineWidth = 2; // Largeur de la ligne
+    // Dessiner une ligne
+    ctx.beginPath();
+    ctx.moveTo(0, canvas.height / 2); // Point de départ (x1, y1)
+    ctx.lineTo(canvas.width, canvas.height / 2); // Point d'arrivée (x2, y2)
+    ctx.stroke(); // Appliquer le tracé
+
+    ctx.beginPath();
+    ctx.moveTo(canvas.width / 2, 0); // Point de départ (x1, y1)
+    ctx.lineTo(canvas.width / 2, canvas.height); // Point d'arrivée (x2, y2)
+    ctx.stroke(); // Appliquer le tracé
   }
 
   private clearCanvas() {
