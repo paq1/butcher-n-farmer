@@ -1,0 +1,27 @@
+<div class="scene-selector-container">
+  <button
+    [ngClass]="{'bnf-btn-on-scene': isButcher}"
+    class="bnf-btn"
+    (click)="switchScene(SceneEnum.BUTCHER)"
+  >Butcher</button>
+  <button
+    [ngClass]="{'bnf-btn-on-scene': isFarmer}"
+    class="bnf-btn"
+    (click)="switchScene(SceneEnum.FARMER)"
+  >Farmer</button>
+  <button
+    [ngClass]="{'bnf-btn-on-scene': isBoss}"
+    class="bnf-btn"
+    (click)="switchScene(SceneEnum.BOSS)"
+  >Boss</button>
+</div>
+
+@if (this.currentScene == SceneEnum.BUTCHER) {
+  <app-butcher-scene></app-butcher-scene>
+}
+@if (this.currentScene == SceneEnum.FARMER) {
+  <app-farmer-scene></app-farmer-scene>
+}
+@if (this.currentScene == SceneEnum.BOSS) {
+  <app-boss-scene></app-boss-scene>
+}

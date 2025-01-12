@@ -1,0 +1,17 @@
+.bnf-header-container {
+  background-color: darkred;
+}
+
+.bnf-title-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bnf-title-container > h1 {
+  padding-right: 24px;
+}
+
+.bnf-footer-container {
+  background-color: orangered;
+}

@@ -1,10 +1,10 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import {Component} from '@angular/core';
+import {ScenesComponent} from './scenes/scenes.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [ScenesComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
