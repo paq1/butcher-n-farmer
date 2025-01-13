@@ -16,12 +16,27 @@
   >Boss</button>
 </div>
 
-@if (this.currentScene == SceneEnum.BUTCHER) {
+
+<div [ngClass]="{'bnf-hidden': this.currentScene != SceneEnum.BUTCHER}">
   <app-butcher-scene></app-butcher-scene>
-}
-@if (this.currentScene == SceneEnum.FARMER) {
+</div>
+
+<div [ngClass]="{'bnf-hidden': this.currentScene != SceneEnum.FARMER}">
   <app-farmer-scene></app-farmer-scene>
-}
-@if (this.currentScene == SceneEnum.BOSS) {
+</div>
+
+<div [ngClass]="{'bnf-hidden': this.currentScene != SceneEnum.BOSS}">
   <app-boss-scene></app-boss-scene>
-}
+</div>
+
+<!--@if (this.currentScene == SceneEnum.BUTCHER) {-->
+
+
+
+<!--}-->
+<!--@if (this.currentScene == SceneEnum.FARMER) {-->
+<!--  -->
+<!--}-->
+<!--@if (this.currentScene == SceneEnum.BOSS) {-->
+<!--  -->
+<!--}-->

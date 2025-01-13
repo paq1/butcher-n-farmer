@@ -12,6 +12,7 @@ import {
 import {isPlatformBrowser} from '@angular/common';
 import {DynamicCanvasDirective} from '../../../directives/dynamic-canvas.directive';
 import {HamModel} from '../../../models/butcher/ham.model';
+import {RendererDebugService} from '../../../renderer/services/renderer-debug.service';
 
 @Component({
   selector: 'app-butcher-scene',
@@ -186,22 +187,7 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     );
     ctx.restore();
 
-    this.traceCentralDebug(ctx, canvas);
-  }
-
-  private traceCentralDebug(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement): void {
-    ctx.strokeStyle = 'red'; // Couleur de la ligne
-    ctx.lineWidth = 2; // Largeur de la ligne
-    // Dessiner une ligne
-    ctx.beginPath();
-    ctx.moveTo(0, canvas.height / 2); // Point de départ (x1, y1)
-    ctx.lineTo(canvas.width, canvas.height / 2); // Point d'arrivée (x2, y2)
-    ctx.stroke(); // Appliquer le tracé
-
-    ctx.beginPath();
-    ctx.moveTo(canvas.width / 2, 0); // Point de départ (x1, y1)
-    ctx.lineTo(canvas.width / 2, canvas.height); // Point d'arrivée (x2, y2)
-    ctx.stroke(); // Appliquer le tracé
+    RendererDebugService.traceCentralDebug(ctx, canvas);
   }
 
   private clearCanvas() {
