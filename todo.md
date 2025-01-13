@@ -1,4 +1,6 @@
-- [ ] rendre le canvas dynamique en terme de taille
+- [x] rendre le canvas dynamique en termes de taille
+- [ ] faire en sorte de rendre les scenes génériques
+- [ ] implémenter le couteau et le faire tourner autour du "ham" avec la souris
+- [ ] implémenter le système de ferme (non défini)
+- [ ] implémenter le système de boss (non défini)
 - [ ] mettre en place des traductions francais - anglais
-- [ ] faire en sorte de rendre les scene génériques
-- [ ] voir pour rendre le canvas dynamique facilement
