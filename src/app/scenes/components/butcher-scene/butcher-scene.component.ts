@@ -31,7 +31,12 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   context: CanvasRenderingContext2D | null = null;
 
   ham: HamModel;
+  knife: {
+    x: number;
+    y: number;
+  } = {x: 0, y: 0};
   hamImage!: HTMLImageElement;
+  knifeImage!: HTMLImageElement;
   // dt
   lastTime: number = 0;
   private animationFrameId!: number;
@@ -39,6 +44,7 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnInit(): void {
     console.log("init component");
     this.ham = this.initHam();
+    this.knife = this.initKnife();
   }
 
   constructor(
@@ -48,9 +54,11 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isBrowser = isPlatformBrowser(this.platformId);
     if (this.isBrowser) {
       this.hamImage = new Image();
+      this.knifeImage = new Image();
     }
 
     this.ham = this.initHam();
+    this.knife = this.initKnife();
   }
 
   initHam(): HamModel {
@@ -63,6 +71,12 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       scaleFactor: 1,
       angle: 0,
     }
+  }
+
+  initKnife(): {x: number; y: number} {
+    return {
+      x: 0, y: 0
+    };
   }
 
   ngOnDestroy(): void {
@@ -151,6 +165,7 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.hamImage.onload = () => {
       // nothing for the moment :)
     }
+    this.knifeImage.src = `${spritesPath}/Sprite-knife.png`;
   }
 
   private drawOnCanvas(): void {
@@ -166,26 +181,45 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     ctx.imageSmoothingEnabled = false;
 
-    const imgWidth = this.hamImage.width;
-    const imgHeight = this.hamImage.height;
+    const imgHamWidth = this.hamImage.width;
+    const imgHamHeight = this.hamImage.height;
     const hamScale = this.ham.scale;
 
     // ctx.drawImage(this.hamImage, x, y, imgWidth, imgHeight);
     ctx.save();
-    ctx.translate(this.ham.x + imgWidth * this.ham.scale / 2, this.ham.y + imgHeight * this.ham.scale / 2);
+    ctx.translate(this.ham.x + imgHamWidth * this.ham.scale / 2, this.ham.y + imgHamHeight * this.ham.scale / 2);
     ctx.rotate((this.ham.angle * Math.PI) / 180);
+
+    const hamDrawPosition = {
+      x: -imgHamWidth * hamScale / 2,
+      y: -imgHamHeight * hamScale / 2,
+    }
     ctx.drawImage(
       this.hamImage,
       0,
       0,
-      imgWidth,
-      imgHeight,
-      -imgWidth * hamScale / 2,
-      -imgHeight * hamScale / 2,
-      imgWidth * hamScale,
-      imgHeight * hamScale
+      imgHamWidth,
+      imgHamHeight,
+      hamDrawPosition.x,
+      hamDrawPosition.y,
+      imgHamWidth * hamScale,
+      imgHamHeight * hamScale
     );
     ctx.restore();
+
+    // affichage du knife
+    const scaleKnife = 2;
+    ctx.drawImage(
+      this.knifeImage,
+      0,
+      0,
+      this.knifeImage.width,
+      this.knifeImage.height,
+      canvas.width / 2 - 64 * scaleKnife / 2,
+      canvas.height / 2 - 64 * scaleKnife / 2 - 200,
+      this.knifeImage.width * scaleKnife,
+      this.knifeImage.height * scaleKnife,
+    );
 
     RendererDebugService.traceCentralDebug(ctx, canvas);
   }
