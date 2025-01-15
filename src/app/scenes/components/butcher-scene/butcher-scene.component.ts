@@ -14,6 +14,7 @@ import {DynamicCanvasDirective} from '../../../directives/dynamic-canvas.directi
 import {HamModel} from '../../../models/butcher/ham.model';
 import {RendererDebugService} from '../../../renderer/services/renderer-debug.service';
 import {Vector2D} from '../../../models/maths/Vector2D';
+import {RendererService} from '../../../renderer/services/renderer.service';
 
 @Component({
   selector: 'app-butcher-scene',
@@ -88,8 +89,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   initHam(): HamModel {
     return {
-      x: 64,
-      y: 64,
+      x: 0,
+      y: 0,
       scale: 2,
       minScale: 2,
       maxScale: 3,
@@ -122,14 +123,11 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     if (canvas) {
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
-      const hamWidth = this.hamImage.width;
-      const hamHeight = this.hamImage.height;
 
-      // this.ham.x += 10 * dt;
-      this.ham.x = (canvasWidth - hamWidth * this.ham.scale) / 2;
-      this.ham.y = (canvasHeight - hamHeight * this.ham.scale) / 2;
+      this.camera.x = canvas.width / 2;
+      this.camera.y = canvas.height / 2;
 
-      // update scale
+      // // update scale
       this.ham.scale += 0.2 * dt * this.ham.scaleFactor;
       if (this.ham.scale > this.ham.maxScale) {
         this.ham.scaleFactor = -1;
@@ -177,31 +175,19 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     ctx.imageSmoothingEnabled = false;
 
-    const imgHamWidth = this.hamImage.width;
-    const imgHamHeight = this.hamImage.height;
     const hamScale = this.ham.scale;
+    const hamDrawPosition = new Vector2D(
+      this.ham.x + this.camera.x - this.hamImage.width * this.ham.scale / 2,
+      this.ham.y + this.camera.y - this.hamImage.height * this.ham.scale / 2
+    )
 
-    // ctx.drawImage(this.hamImage, x, y, imgWidth, imgHeight);
-    ctx.save();
-    ctx.translate(this.ham.x + imgHamWidth * this.ham.scale / 2, this.ham.y + imgHamHeight * this.ham.scale / 2);
-    ctx.rotate((this.ham.angle * Math.PI) / 180);
-
-    const hamDrawPosition = {
-      x: -imgHamWidth * hamScale / 2,
-      y: -imgHamHeight * hamScale / 2,
-    }
-    ctx.drawImage(
+    RendererService.draw(
+      ctx,
       this.hamImage,
-      0,
-      0,
-      imgHamWidth,
-      imgHamHeight,
-      hamDrawPosition.x,
-      hamDrawPosition.y,
-      imgHamWidth * hamScale,
-      imgHamHeight * hamScale
+      hamDrawPosition,
+      new Vector2D(this.hamImage.width * hamScale, this.hamImage.height * hamScale),
+      this.ham.angle
     );
-    ctx.restore();
 
     // affichage du knife
     const scaleKnife = 2;
@@ -221,8 +207,6 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private clearCanvas() {
-    const width = this.butcherCanvas?.nativeElement?.width || 0;
-    const height = this.butcherCanvas?.nativeElement?.height || 0;
-    this.context?.clearRect(0, 0, width, height);
+    RendererService.clean(this.context, this.butcherCanvas?.nativeElement);
   }
 }
