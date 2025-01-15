@@ -13,6 +13,7 @@ import {isPlatformBrowser} from '@angular/common';
 import {DynamicCanvasDirective} from '../../../directives/dynamic-canvas.directive';
 import {HamModel} from '../../../models/butcher/ham.model';
 import {RendererDebugService} from '../../../renderer/services/renderer-debug.service';
+import {Vector2D} from '../../../models/maths/Vector2D';
 
 @Component({
   selector: 'app-butcher-scene',
@@ -30,11 +31,9 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('butcherCanvas', {static: false}) butcherCanvas?: ElementRef<HTMLCanvasElement>;
   context: CanvasRenderingContext2D | null = null;
 
+  camera: Vector2D;
   ham: HamModel;
-  knife: {
-    x: number;
-    y: number;
-  } = {x: 0, y: 0};
+  knife: Vector2D;
   hamImage!: HTMLImageElement;
   knifeImage!: HTMLImageElement;
   // dt
@@ -42,14 +41,39 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   private animationFrameId!: number;
 
   ngOnInit(): void {
-    console.log("init component");
+    console.log("init butcher");
     this.ham = this.initHam();
     this.knife = this.initKnife();
   }
 
+  ngOnDestroy(): void {
+    if (this.isBrowser) {
+      console.log("destroy butcher scene");
+      cancelAnimationFrame(this.animationFrameId);
+    }
+  }
+
+  ngAfterViewInit(): void {
+    console.log("after init component");
+    if (this.isBrowser) {
+      this.load();
+    }
+
+    if (this.isBrowser) {
+      console.log("ngAfterViewInit");
+      if (this.butcherCanvas) {
+        console.log("canvas set");
+        this.context = this.butcherCanvas.nativeElement.getContext('2d');
+        if (this.context) {
+          this.startAnimation();
+        }
+      }
+    }
+  }
+
   constructor(
     private ngZone: NgZone,
-    @Inject(PLATFORM_ID) private platformId: object // Injection de la plateforme actuelle
+    @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
     if (this.isBrowser) {
@@ -59,6 +83,7 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.ham = this.initHam();
     this.knife = this.initKnife();
+    this.camera = new Vector2D(0,0);
   }
 
   initHam(): HamModel {
@@ -73,35 +98,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  initKnife(): {x: number; y: number} {
-    return {
-      x: 0, y: 0
-    };
-  }
-
-  ngOnDestroy(): void {
-    if (this.isBrowser) {
-      console.log("destroy butcher scene");
-      cancelAnimationFrame(this.animationFrameId);
-    }
-  }
-
-  ngAfterViewInit(): void {
-    console.log("after init component");
-    if (this.isBrowser) {
-      this.loadSprites();
-    }
-
-    if (this.isBrowser) {
-      console.log("ngAfterViewInit");
-      if (this.butcherCanvas) {
-        console.log("canvas set");
-        this.context = this.butcherCanvas.nativeElement.getContext('2d');
-        if (this.context) {
-          this.startAnimation();
-        }
-      }
-    }
+  initKnife(): Vector2D {
+    return new Vector2D(0,0);
   }
 
   startAnimation(timestamp?: number): void {
@@ -120,7 +118,6 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   update(dt: number): void {
-
     const canvas = this.butcherCanvas?.nativeElement;
     if (canvas) {
       const canvasWidth = canvas.width;
@@ -148,7 +145,6 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       if (this.ham.angle >= 360) {
         this.ham.angle = 0;
       }
-
     }
   }
 
