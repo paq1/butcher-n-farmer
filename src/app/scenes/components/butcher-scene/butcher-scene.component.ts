@@ -15,6 +15,7 @@ import {HamModel} from '../../../models/butcher/ham.model';
 import {RendererDebugService} from '../../../renderer/services/renderer-debug.service';
 import {Vector2D} from '../../../models/maths/Vector2D';
 import {RendererService} from '../../../renderer/services/renderer.service';
+import {KnifeModel} from '../../../models/butcher/knife.model';
 
 @Component({
   selector: 'app-butcher-scene',
@@ -34,7 +35,7 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   camera: Vector2D;
   ham: HamModel;
-  knife: Vector2D;
+  knife: KnifeModel;
   hamImage!: HTMLImageElement;
   knifeImage!: HTMLImageElement;
   // dt
@@ -56,19 +57,22 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     console.log("after init component");
-    if (this.isBrowser) {
-      this.load();
+    if (!this.isBrowser) {
+      // osef - do nothing (server side)
+      console.log("butcher - server side after view loading");
+      return;
     }
 
-    if (this.isBrowser) {
-      console.log("ngAfterViewInit");
-      if (this.butcherCanvas) {
-        console.log("canvas set");
-        this.context = this.butcherCanvas.nativeElement.getContext('2d');
-        if (this.context) {
-          this.startAnimation();
-        }
-      }
+    if (!this.butcherCanvas) {
+      console.error("butcher - canvas not found");
+      return;
+    }
+
+    this.load();
+    console.log("canvas set");
+    this.context = this.butcherCanvas.nativeElement.getContext('2d');
+    if (this.context) {
+      this.startAnimation();
     }
   }
 
@@ -89,8 +93,7 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   initHam(): HamModel {
     return {
-      x: 0,
-      y: 0,
+      position: new Vector2D(0, 0),
       scale: 2,
       minScale: 2,
       maxScale: 3,
@@ -99,8 +102,11 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  initKnife(): Vector2D {
-    return new Vector2D(0,0);
+  initKnife(): KnifeModel {
+    return {
+      position: new Vector2D(0,0),
+      distanceHam: 100
+    }
   }
 
   startAnimation(timestamp?: number): void {
@@ -120,37 +126,31 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   update(dt: number): void {
     const canvas = this.butcherCanvas?.nativeElement;
-    if (canvas) {
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-
-      this.camera.x = canvas.width / 2;
-      this.camera.y = canvas.height / 2;
-
-      // // update scale
-      this.ham.scale += 0.2 * dt * this.ham.scaleFactor;
-      if (this.ham.scale > this.ham.maxScale) {
-        this.ham.scaleFactor = -1;
-        this.ham.scale = this.ham.maxScale;
-      }
-      if (this.ham.scale < this.ham.minScale) {
-        this.ham.scaleFactor = 1;
-        this.ham.scale = this.ham.minScale;
-      }
-
-      // update angle
-      this.ham.angle += 50 * dt;
-      if (this.ham.angle >= 360) {
-        this.ham.angle = 0;
-      }
+    if (!canvas) {
+      console.error("butcher - failed load canvas");
+      return ;
     }
+
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+
+    this.updateCamera(canvas);
+    this.updateHam(dt);
   }
 
   draw(): void {
-    if (this.context && this.butcherCanvas) {
-      this.clearCanvas();
-      this.drawOnCanvas();
+    if (!this.butcherCanvas) {
+      console.error("butcher - canvas error");
+      return ;
     }
+
+    if (!this.context) {
+      console.error("butcher - context2d error");
+      return ;
+    }
+
+    this.clearCanvas();
+    this.drawOnCanvas();
   }
 
   private loadSprites(): void {
@@ -160,6 +160,30 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       // nothing for the moment :)
     }
     this.knifeImage.src = `${spritesPath}/Sprite-knife.png`;
+  }
+
+  private updateCamera(canvas: HTMLCanvasElement): void {
+    this.camera.x = canvas.width / 2;
+    this.camera.y = canvas.height / 2;
+  }
+
+  private updateHam(dt: number): void {
+    // // update scale
+    this.ham.scale += 0.2 * dt * this.ham.scaleFactor;
+    if (this.ham.scale > this.ham.maxScale) {
+      this.ham.scaleFactor = -1;
+      this.ham.scale = this.ham.maxScale;
+    }
+    if (this.ham.scale < this.ham.minScale) {
+      this.ham.scaleFactor = 1;
+      this.ham.scale = this.ham.minScale;
+    }
+
+    // update angle
+    this.ham.angle += 50 * dt;
+    if (this.ham.angle >= 360) {
+      this.ham.angle = 0;
+    }
   }
 
   private drawOnCanvas(): void {
@@ -177,8 +201,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
     const hamScale = this.ham.scale;
     const hamDrawPosition = new Vector2D(
-      this.ham.x + this.camera.x - this.hamImage.width * this.ham.scale / 2,
-      this.ham.y + this.camera.y - this.hamImage.height * this.ham.scale / 2
+      this.ham.position.x + this.camera.x - this.hamImage.width * this.ham.scale / 2,
+      this.ham.position.y + this.camera.y - this.hamImage.height * this.ham.scale / 2
     )
 
     RendererService.draw(

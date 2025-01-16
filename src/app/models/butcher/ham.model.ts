@@ -1,6 +1,7 @@
+import {Vector2D} from '../maths/Vector2D';
+
 export interface HamModel {
-  x: number,
-  y: number,
+  position: Vector2D;
   scale: number,
   minScale: number,
   maxScale: number,
