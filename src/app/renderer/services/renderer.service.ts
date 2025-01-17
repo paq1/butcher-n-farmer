@@ -13,10 +13,11 @@ export class RendererService {
     sprite: HTMLImageElement,
     fromCenter: boolean,
     position: Vector2D,
-    sizeImage: Vector2D,
+    scale: number, // sizeImage: Vector2D,
     angle?: number
   ): void {
     if (sprite.complete) {
+      const sizeImage = new Vector2D(sprite.width * scale, sprite.height * scale);
       const sanitizePos = fromCenter ? position.minusOther(new Vector2D(sizeImage.x / 2, sizeImage.y / 2)) : position;
 
       if (angle) {

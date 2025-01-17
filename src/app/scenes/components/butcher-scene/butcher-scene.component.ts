@@ -106,8 +106,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
   initKnife(): KnifeModel {
     return {
-      position: new Vector2D(0,0),
-      distanceHam: 100
+      position: new Vector2D(0, -1),
+      distanceFromHam: 200
     }
   }
 
@@ -135,6 +135,7 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.updateCamera(canvas);
     this.updateHam(dt);
+    this.updateKnife();
   }
 
   draw(): void {
@@ -184,6 +185,24 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+  private updateKnife(): void {
+    const knifePosition = this.sanitizeKnifePosition();
+    if (!knifePosition) {
+      console.warn("butcher.knife: nouvelle position null");
+      return;
+    }
+    this.knife.position = knifePosition;
+  }
+
+  private sanitizeKnifePosition(): Vector2D | null {
+    const unitaire = this.knife.position.unitaire();
+    if (!unitaire) {
+      console.warn("butcher.knife : attention unitaire === null");
+      return null;
+    }
+    return unitaire.product(this.knife.distanceFromHam);
+  }
+
   private drawOnCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
     this.drawHam(ctx);
     this.drawKnife(ctx);
@@ -192,27 +211,25 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private drawHam(ctx: CanvasRenderingContext2D): void {
-    const hamScale = this.ham.scale;
-
     RendererService.draw(
       ctx,
       this.hamImage,
       true,
       this.ham.position.plusOther(this.camera),
-      new Vector2D(this.hamImage.width * hamScale, this.hamImage.height * hamScale),
+      this.ham.scale,
       this.ham.angle
     );
   }
 
   private drawKnife(ctx: CanvasRenderingContext2D): void {
-    const scaleKnife = 2;
+    const knifeScale = 2;
     RendererService.draw(
       ctx,
       this.knifeImage,
       true,
       this.knife.position.plusOther(this.camera),
-      new Vector2D(this.knifeImage.width * scaleKnife, this.knifeImage.height * scaleKnife)
-    )
+      knifeScale
+    );
   }
 
   private clearCanvas() {
