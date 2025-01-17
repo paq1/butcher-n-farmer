@@ -28,4 +28,18 @@ export class Vector2D {
     return this.div(this.norme());
   }
 
+  produitScalaire(other: Vector2D): number {
+    return this.x * other.x + this.y * other.y;
+  }
+
+  angleRadiantBetween(other: Vector2D): number {
+    const norme = this.norme();
+    const otherNorme = other.norme();
+    const cos = this.produitScalaire(other) / (norme * otherNorme);
+    return Math.acos(cos);
+  }
+
+  angleDegresBetween(other: Vector2D): number {
+    return this.angleRadiantBetween(other) * 180 / Math.PI;
+  }
 }

@@ -17,6 +17,7 @@ import {Vector2D} from '../../../models/maths/Vector2D';
 import {RendererService} from '../../../renderer/services/renderer.service';
 import {KnifeModel} from '../../../models/butcher/knife.model';
 import {MouseService} from '../../../mouse/services/mouse.service';
+import {ScoreService} from '../../../inventaire/services/score.service';
 
 @Component({
   selector: 'app-butcher-scene',
@@ -47,7 +48,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(
     private ngZone: NgZone,
     private mouseService: MouseService,
-    @Inject(PLATFORM_ID) private platformId: object
+    @Inject(PLATFORM_ID) private platformId: object,
+    private scoreService: ScoreService,
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
     if (this.isBrowser) {
@@ -123,7 +125,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   initKnife(): KnifeModel {
     return {
       position: new Vector2D(0, -1),
-      distanceFromHam: 200
+      distanceFromHam: 200,
+      angle: 0,
     }
   }
 
@@ -151,7 +154,7 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.updateCamera(canvas);
     this.updateHam(dt);
-    this.updateKnife();
+    this.updateKnife(dt);
   }
 
   draw(): void {
@@ -202,7 +205,7 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 
-  private updateKnife(): void {
+  private updateKnife(dt: number): void {
     const mouseFirstMoving = this.mouseService.getMouseInfo(this.canvasButcherId).hasFirstMouving;
     this.knife.position = mouseFirstMoving ? this.mouseWorldPosition() || new Vector2D(0, -1) : new Vector2D(0, -1);
 
@@ -212,6 +215,14 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
     this.knife.position = knifePosition;
+
+    const v1 = this.ham.position.minusOther(this.knife.position)
+    const ordonnee = new Vector2D(0,1);
+
+    const signe = v1.x > 0 ? -1 : 1;
+    this.knife.angle = ordonnee.angleDegresBetween(v1) * signe;
+
+    this.scoreService.addBones(dt * this.scoreService.multiplicateurMouvement);
   }
 
   private sanitizeKnifePosition(knifePosition: Vector2D): Vector2D | null {
@@ -247,7 +258,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       this.knifeImage,
       true,
       this.knife.position.plusOther(this.camera),
-      knifeScale
+      knifeScale,
+      this.knife.angle
     );
   }
 
