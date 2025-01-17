@@ -11,19 +11,22 @@ export class RendererService {
   static draw(
     canvasCtx: CanvasRenderingContext2D,
     sprite: HTMLImageElement,
+    fromCenter: boolean,
     position: Vector2D,
     sizeImage: Vector2D,
     angle?: number
   ): void {
     if (sprite.complete) {
+      const sanitizePos = fromCenter ? position.minusOther(new Vector2D(sizeImage.x / 2, sizeImage.y / 2)) : position;
+
       if (angle) {
         canvasCtx?.save();
-        canvasCtx?.translate(position.x + sizeImage.x / 2, position.y + sizeImage.y / 2);
+        canvasCtx?.translate(sanitizePos.x + sizeImage.x / 2, sanitizePos.y + sizeImage.y / 2);
         canvasCtx?.rotate((angle * Math.PI) / 180);
         canvasCtx?.drawImage(sprite, -sizeImage.x / 2, -sizeImage.y / 2, sizeImage.x, sizeImage.y);
         canvasCtx?.restore();
       } else {
-        canvasCtx?.drawImage(sprite, position.x, position.y, sizeImage.x, sizeImage.y);
+        canvasCtx?.drawImage(sprite, sanitizePos.x, sanitizePos.y, sizeImage.x, sizeImage.y);
       }
     }
   }

@@ -71,7 +71,9 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.load();
     console.log("canvas set");
     this.context = this.butcherCanvas.nativeElement.getContext('2d');
+
     if (this.context) {
+      this.context.imageSmoothingEnabled = false;
       this.startAnimation();
     }
   }
@@ -131,9 +133,6 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       return ;
     }
 
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-
     this.updateCamera(canvas);
     this.updateHam(dt);
   }
@@ -143,14 +142,13 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       console.error("butcher - canvas error");
       return ;
     }
-
     if (!this.context) {
       console.error("butcher - context2d error");
       return ;
     }
 
     this.clearCanvas();
-    this.drawOnCanvas();
+    this.drawOnCanvas(this.butcherCanvas.nativeElement, this.context);
   }
 
   private loadSprites(): void {
@@ -186,48 +184,35 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private drawOnCanvas(): void {
-    const canvas = this.butcherCanvas?.nativeElement;
-    if (!canvas) {
-      console.error("butcher - Fail load canvas");
-      return;
-    }
-    const ctx = canvas.getContext('2d');
-    if (!ctx) {
-      console.error("butcher - Fail to get context");
-      return;
-    }
-    ctx.imageSmoothingEnabled = false;
+  private drawOnCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
+    this.drawHam(ctx);
+    this.drawKnife(ctx);
 
+    RendererDebugService.traceCentralDebug(ctx, canvas);
+  }
+
+  private drawHam(ctx: CanvasRenderingContext2D): void {
     const hamScale = this.ham.scale;
-    const hamDrawPosition = new Vector2D(
-      this.ham.position.x + this.camera.x - this.hamImage.width * this.ham.scale / 2,
-      this.ham.position.y + this.camera.y - this.hamImage.height * this.ham.scale / 2
-    )
 
     RendererService.draw(
       ctx,
       this.hamImage,
-      hamDrawPosition,
+      true,
+      this.ham.position.plusOther(this.camera),
       new Vector2D(this.hamImage.width * hamScale, this.hamImage.height * hamScale),
       this.ham.angle
     );
+  }
 
-    // affichage du knife
+  private drawKnife(ctx: CanvasRenderingContext2D): void {
     const scaleKnife = 2;
-    ctx.drawImage(
+    RendererService.draw(
+      ctx,
       this.knifeImage,
-      0,
-      0,
-      this.knifeImage.width,
-      this.knifeImage.height,
-      canvas.width / 2 - 64 * scaleKnife / 2,
-      canvas.height / 2 - 64 * scaleKnife / 2 - 200,
-      this.knifeImage.width * scaleKnife,
-      this.knifeImage.height * scaleKnife,
-    );
-
-    RendererDebugService.traceCentralDebug(ctx, canvas);
+      true,
+      this.knife.position.plusOther(this.camera),
+      new Vector2D(this.knifeImage.width * scaleKnife, this.knifeImage.height * scaleKnife)
+    )
   }
 
   private clearCanvas() {
