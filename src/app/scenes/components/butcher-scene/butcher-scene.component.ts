@@ -16,6 +16,7 @@ import {RendererDebugService} from '../../../renderer/services/renderer-debug.se
 import {Vector2D} from '../../../models/maths/Vector2D';
 import {RendererService} from '../../../renderer/services/renderer.service';
 import {KnifeModel} from '../../../models/butcher/knife.model';
+import {MouseService} from '../../../mouse/services/mouse.service';
 
 @Component({
   selector: 'app-butcher-scene',
@@ -38,9 +39,28 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   knife: KnifeModel;
   hamImage!: HTMLImageElement;
   knifeImage!: HTMLImageElement;
+  canvasButcherId: string;
   // dt
   lastTime: number = 0;
   private animationFrameId!: number;
+
+  constructor(
+    private ngZone: NgZone,
+    private mouseService: MouseService,
+    @Inject(PLATFORM_ID) private platformId: object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+    if (this.isBrowser) {
+      this.hamImage = new Image();
+      this.knifeImage = new Image();
+    }
+
+    this.canvasButcherId = "butcher-canvas";
+    this.mouseService.initCanvas(this.canvasButcherId, { position: new Vector2D(0,0), isPressedBtnRight: false, isPressedBtnLeft: false, hasFirstMouving: false });
+    this.ham = this.initHam();
+    this.knife = this.initKnife();
+    this.camera = new Vector2D(0,0);
+  }
 
   ngOnInit(): void {
     console.log("init butcher");
@@ -68,6 +88,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.mouseService.initListerForCanvas(this.canvasButcherId, this.butcherCanvas.nativeElement);
+
     this.load();
     console.log("canvas set");
     this.context = this.butcherCanvas.nativeElement.getContext('2d');
@@ -78,19 +100,13 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  constructor(
-    private ngZone: NgZone,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {
-    this.isBrowser = isPlatformBrowser(this.platformId);
-    if (this.isBrowser) {
-      this.hamImage = new Image();
-      this.knifeImage = new Image();
-    }
+  mouseWorldPosition(): Vector2D | undefined {
 
-    this.ham = this.initHam();
-    this.knife = this.initKnife();
-    this.camera = new Vector2D(0,0);
+    const mouse = this.mouseService.getMouseInfo(this.canvasButcherId);
+    if (mouse) {
+      return mouse.position.minusOther(this.camera);
+    }
+    return undefined;
   }
 
   initHam(): HamModel {
@@ -185,8 +201,12 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
+
   private updateKnife(): void {
-    const knifePosition = this.sanitizeKnifePosition();
+    const mouseFirstMoving = this.mouseService.getMouseInfo(this.canvasButcherId).hasFirstMouving;
+    this.knife.position = mouseFirstMoving ? this.mouseWorldPosition() || new Vector2D(0, -1) : new Vector2D(0, -1);
+
+    const knifePosition = this.sanitizeKnifePosition(this.knife.position);
     if (!knifePosition) {
       console.warn("butcher.knife: nouvelle position null");
       return;
@@ -194,8 +214,8 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
     this.knife.position = knifePosition;
   }
 
-  private sanitizeKnifePosition(): Vector2D | null {
-    const unitaire = this.knife.position.unitaire();
+  private sanitizeKnifePosition(knifePosition: Vector2D): Vector2D | null {
+    const unitaire = knifePosition.unitaire();
     if (!unitaire) {
       console.warn("butcher.knife : attention unitaire === null");
       return null;
@@ -206,7 +226,6 @@ export class ButcherSceneComponent implements OnInit, AfterViewInit, OnDestroy {
   private drawOnCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): void {
     this.drawHam(ctx);
     this.drawKnife(ctx);
-
     RendererDebugService.traceCentralDebug(ctx, canvas);
   }
 
